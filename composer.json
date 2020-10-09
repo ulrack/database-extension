@@ -15,6 +15,7 @@
         "grizz-it/configuration": "^1.1",
         "ulrack/command": "^2.0",
         "ulrack/dbal": "^1.1",
+        "ulrack/dbal-pdo": "^2.1",
         "ulrack/services": "^3.0"
     },
     "authors": [
