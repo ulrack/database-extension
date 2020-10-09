@@ -1,0 +1,6 @@
+{
+    "parent": "db.connection",
+    "command": "list",
+    "description": "Lists the database connection pools.",
+    "service": "services.command.db.connection.list"
+}

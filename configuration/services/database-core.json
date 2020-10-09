@@ -1,0 +1,5 @@
+{
+    "db.connection.factory.pdo": {
+        "class": "\\Ulrack\\Dbal\\Pdo\\Factory\\PdoConnectionFactory"
+    }
+}

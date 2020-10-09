@@ -1,0 +1,6 @@
+{
+    "parent": "db.connection",
+    "command": "test",
+    "description": "Tests the database connections.",
+    "service": "services.command.db.connection.test"
+}

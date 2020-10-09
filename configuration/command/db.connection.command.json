@@ -1,0 +1,5 @@
+{
+    "parent": "db",
+    "command": "connection",
+    "description": "Database connection related commands."
+}

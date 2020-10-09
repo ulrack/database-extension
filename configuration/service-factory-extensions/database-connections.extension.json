@@ -1,0 +1,5 @@
+{
+    "$schema": "service.factory.extension.schema.json",
+    "class": "\\Ulrack\\DatabaseExtension\\Factory\\Extension\\DatabaseConnectionsFactory",
+    "key": "database-connections"
+}

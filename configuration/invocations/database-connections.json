@@ -1,0 +1,13 @@
+{
+    "db.service.factory": {
+        "service": "invocations.db.service.factory.extension",
+        "method": "getExtension",
+        "parameters": {
+            "key": "database-connections"
+        }
+    },
+    "db.service.factory.extension": {
+        "service": "services.core.service.manager",
+        "method": "getServiceFactory"
+    }
+}

@@ -1,0 +1,4 @@
+{
+    "command": "db",
+    "description": "Database related commands."
+}
