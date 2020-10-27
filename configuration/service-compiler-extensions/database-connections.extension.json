@@ -1,6 +1,6 @@
 {
     "$schema": "service.compiler.extension.schema.json",
-    "class": "\\Ulrack\\DatabaseExtension\\Component\\Compiler\\Extension\\DatabaseConnectionsCompiler",
+    "class": "\\Ulrack\\Services\\Component\\Compiler\\Extension\\PassThroughCompiler",
     "sortOrder": 50,
     "key": "database-connections",
     "schema": {
