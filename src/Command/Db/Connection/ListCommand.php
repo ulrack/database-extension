@@ -7,28 +7,28 @@
 
 namespace Ulrack\DatabaseExtension\Command\Db\Connection;
 
-use Ulrack\Command\Common\Command\InputInterface;
-use Ulrack\Command\Common\Command\OutputInterface;
-use Ulrack\Command\Common\Command\CommandInterface;
-use Ulrack\DatabaseExtension\Factory\Extension\DatabaseConnectionsFactory;
+use GrizzIt\Command\Common\Command\InputInterface;
+use GrizzIt\Command\Common\Command\OutputInterface;
+use GrizzIt\Configuration\Common\RegistryInterface;
+use GrizzIt\Command\Common\Command\CommandInterface;
 
 class ListCommand implements CommandInterface
 {
     /**
      * Contains the databases service factory.
      *
-     * @var DatabaseConnectionsFactory
+     * @var RegistryInterface
      */
-    private $databasesFactory;
+    private $configRegistry;
 
     /**
      * Constructor.
      *
-     * @param DatabasesFactory $databasesFactory
+     * @param RegistryInterface $serviceRegsitry
      */
-    public function __construct(DatabaseConnectionsFactory $databasesFactory)
+    public function __construct(RegistryInterface $configRegistry)
     {
-        $this->databasesFactory = $databasesFactory;
+        $this->configRegistry = $configRegistry;
     }
 
     /**
@@ -44,6 +44,15 @@ class ListCommand implements CommandInterface
         OutputInterface $output
     ): void {
         $output->outputText('Available connections:', true, 'title');
-        $output->outputList($this->databasesFactory->getList());
+        $output->outputList(
+            array_keys(
+                array_merge(
+                    ...array_column(
+                        $this->configRegistry->toArray()['services'],
+                        'database-connections'
+                    )
+                )
+            )
+        );
     }
 }

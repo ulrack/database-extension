@@ -1,5 +1,54 @@
 {
-    "db.connection.factory.pdo": {
-        "class": "\\Ulrack\\Dbal\\Pdo\\Factory\\PdoConnectionFactory"
+    "parameters": {
+        "service.configuration.validation.database-connections": {
+            "key": "database-connections",
+            "schema": "database-connections.schema.json"
+        }
+    },
+    "services": {
+        "service.factory.database-connections": {
+            "class": "\\Ulrack\\DatabaseExtension\\Factory\\Extension\\DatabaseConnectionsFactory"
+        },
+        "command.db.connection.test": {
+            "class": "\\Ulrack\\DatabaseExtension\\Command\\Db\\Connection\\TestCommand",
+            "parameters": {
+                "serviceFactory": "@{internal.core.service.factory}",
+                "configRegistry": "@{invocations.get.config.registry}"
+            }
+        },
+        "command.db.connection.list": {
+            "class": "\\Ulrack\\DatabaseExtension\\Command\\Db\\Connection\\ListCommand",
+            "parameters": {
+                "configRegistry": "@{invocations.get.config.registry}"
+            }
+        },
+        "db.connection.factory.pdo": {
+            "class": "\\GrizzIt\\Dbal\\Pdo\\Factory\\PdoConnectionFactory"
+        }
+    },
+    "invocations": {
+        "get.config.registry": {
+            "service": "internal.core.configuration.manager",
+            "method": "getConfigRegistry"
+        },
+        "add.database-connections.service.factory": {
+            "service": "internal.core.service.factory",
+            "method": "addExtension",
+            "parameters": {
+                "scope": "database-connections",
+                "extension": "@{services.service.factory.database-connections}"
+            },
+            "cache": true
+        }
+    },
+    "tags": {
+        "add.database-connections.factory": {
+            "trigger": "triggers.core.service.factories",
+            "service": "invocations.add.database-connections.service.factory"
+        },
+        "add.service.validation.database-connections": {
+            "service": "parameters.service.configuration.validation.database-connections",
+            "trigger": "triggers.service.configuration.validation"
+        }
     }
 }

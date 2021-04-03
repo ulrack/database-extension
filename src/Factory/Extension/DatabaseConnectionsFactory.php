@@ -7,140 +7,56 @@
 
 namespace Ulrack\DatabaseExtension\Factory\Extension;
 
-use Ulrack\Dbal\Common\ConnectionInterface;
-use Ulrack\Dbal\Common\ConnectionFactoryInterface;
-use Ulrack\Services\Exception\DefinitionNotFoundException;
-use Ulrack\Services\Common\AbstractServiceFactoryExtension;
+use GrizzIt\Dbal\Common\ConnectionInterface;
+use GrizzIt\Dbal\Common\ConnectionFactoryInterface;
+use GrizzIt\Services\Common\Factory\ServiceFactoryExtensionInterface;
 
-class DatabaseConnectionsFactory extends AbstractServiceFactoryExtension
+class DatabaseConnectionsFactory implements ServiceFactoryExtensionInterface
 {
     /**
      * Contains the instantiated databases.
      *
      * @var array
      */
-    private $databases = [];
+    private array $databases = [];
 
     /**
-     * Register a value to a service key.
-     *
-     * @param string $serviceKey
-     * @param mixed $value
-     *
-     * @return void
-     */
-    public function registerService(string $serviceKey, $value): void
-    {
-        $this->databases[$serviceKey] = $value;
-    }
-
-    /**
-     * Retrieves a list of all possible services.
-     *
-     * @return array
-     */
-    public function getList(): array
-    {
-        return array_keys($this->getServices()[$this->getKey()]);
-    }
-
-    /**
-     * Creates an instance of a database.
+     * Converts a service key and definition to an instance.
      *
      * @param string $key
-     * @param array $database
+     * @param mixed $definition
+     * @param callable $create
      *
      * @return ConnectionInterface
      */
-    private function createDatabaseInstance(
+    public function create(
         string $key,
-        array $database
-    ): ConnectionInterface {
+        mixed $definition,
+        callable $create
+    ): mixed {
         if (!isset($this->databases[$key])) {
             /** @var ConnectionFactoryInterface $databaseFactory */
-            $databaseFactory = $this->superCreate(
-                'services.db.connection.factory.' . $database['type']
+            $databaseFactory = $create(
+                'services.db.connection.factory.' . $definition['type']
             );
 
             $this->databases[$key] = $databaseFactory->create(
                 sprintf(
                     '%s:host=%s%s',
-                    $database['driver'],
-                    $database['host'],
-                    !empty($database['database']) ? sprintf(
+                    $definition['driver'],
+                    $definition['host'],
+                    !empty($definition['database']) ? sprintf(
                         ';dbname=%s',
-                        $database['database']
+                        $definition['database']
                     ) : ''
                 ),
-                $database['username'],
-                $database['password'] ?? null,
-                $database['options'] ?? null,
-                $database['attributes'] ?? null
+                $definition['username'],
+                $definition['password'] ?? null,
+                $definition['options'] ?? null,
+                $definition['attributes'] ?? null
             );
         }
 
         return $this->databases[$key];
-    }
-
-    /**
-     * Invoke the invocation and return the result.
-     *
-     * @param string $serviceKey
-     *
-     * @return mixed
-     *
-     * @throws DefinitionNotFoundException When the definition can not be found.
-     */
-    public function create(string $serviceKey)
-    {
-        $serviceKey = $this->preCreate(
-            $serviceKey,
-            $this->getParameters()
-        )['serviceKey'];
-
-        $internalKey = preg_replace(
-            sprintf('/^%s\\./', preg_quote($this->getKey())),
-            '',
-            $serviceKey,
-            1
-        );
-
-        $services = $this->getServices()[$this->getKey()];
-        if (!isset($services[$internalKey])) {
-            throw new DefinitionNotFoundException($serviceKey);
-        }
-
-        return $this->postCreate(
-            $serviceKey,
-            $this->createDatabaseInstance(
-                $internalKey,
-                $this->resolveReference(
-                    $services[$internalKey]
-                )
-            ),
-            $this->getParameters()
-        )['return'];
-    }
-
-    /**
-     * Resolves a reference to another service if applicable.
-     *
-     * @param mixed $value
-     *
-     * @return mixed
-     */
-    private function resolveReference($value)
-    {
-        if (is_string($value) && $this->isReference($value)) {
-            $value = $this->superCreate(trim($value, '@{}'));
-        }
-
-        if (is_array($value)) {
-            foreach ($value as $key => $item) {
-                $value[$key] = $this->resolveReference($item);
-            }
-        }
-
-        return $value;
     }
 }

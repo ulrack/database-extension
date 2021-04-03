@@ -9,28 +9,40 @@ namespace Ulrack\DatabaseExtension\Command\Db\Connection;
 
 use Throwable;
 use RuntimeException;
-use Ulrack\Command\Common\Command\InputInterface;
-use Ulrack\Command\Common\Command\OutputInterface;
-use Ulrack\Command\Common\Command\CommandInterface;
-use Ulrack\DatabaseExtension\Factory\Extension\DatabaseConnectionsFactory;
+use GrizzIt\Command\Common\Command\InputInterface;
+use GrizzIt\Command\Common\Command\OutputInterface;
+use GrizzIt\Configuration\Common\RegistryInterface;
+use GrizzIt\Command\Common\Command\CommandInterface;
+use GrizzIt\Services\Common\Factory\ServiceFactoryInterface;
 
 class TestCommand implements CommandInterface
 {
     /**
      * Contains the databases service factory.
      *
-     * @var DatabaseConnectionsFactory
+     * @var ServiceFactoryInterface
      */
-    private $databasesFactory;
+    private $serviceFactory;
+
+    /**
+     * Contains the databases service factory.
+     *
+     * @var RegistryInterface
+     */
+    private $configRegistry;
 
     /**
      * Constructor.
      *
-     * @param DatabasesFactory $databasesFactory
+     * @param ServiceFactoryInterface $serviceFactory
+     * @param RegistryInterface $configRegistry
      */
-    public function __construct(DatabaseConnectionsFactory $databasesFactory)
-    {
-        $this->databasesFactory = $databasesFactory;
+    public function __construct(
+        ServiceFactoryInterface $serviceFactory,
+        RegistryInterface $configRegistry
+    ) {
+        $this->serviceFactory = $serviceFactory;
+        $this->configRegistry = $configRegistry;
     }
 
     /**
@@ -46,9 +58,17 @@ class TestCommand implements CommandInterface
         OutputInterface $output
     ): void {
         $output->writeLine('Fetching database configurations.', 'text', true);
+        $connections = array_keys(
+            array_merge(
+                ...array_column(
+                    $this->configRegistry->toArray()['services'],
+                    'database-connections'
+                )
+            )
+        );
         $errors = 0;
 
-        foreach ($this->databasesFactory->getList() as $key) {
+        foreach ($connections as $key) {
             $output->writeLine(
                 sprintf('Checking database %s.', $key),
                 'text',
@@ -56,7 +76,7 @@ class TestCommand implements CommandInterface
             );
 
             try {
-                $this->databasesFactory->create($key);
+                $this->serviceFactory->create('database-connections.' . $key);
                 $output->outputBlock(
                     sprintf('Connection successful for database: %s', $key),
                     'success-block'

@@ -1,5 +1,0 @@
-{
-    "$schema": "configuration.schema.json",
-    "key": "database-connections",
-    "location": "configuration/database-connections"
-}

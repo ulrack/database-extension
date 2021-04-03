@@ -5,19 +5,20 @@ connections for the project.
 
 ## Configuring the connection
 
-To create a database connection in a project, create a new folder in the
-`configuration` folder named `database-connections`. Inside this folder, create
-a configuration for the database, by default only the PDO type is supported.
-
+To create a database connection in a project, create a new definition in the
+service layer. The definition will look like the following example, by default
+only the PDO type is supported.
 ```json
 {
-    "main": {
-        "type": "pdo",
-        "driver": "mysql",
-        "database": "",
-        "host": "localhost",
-        "username": "my-user",
-        "password": "@{parameters.database.password}"
+    "database-connections": {
+        "main": {
+            "type": "pdo",
+            "driver": "mysql",
+            "database": "",
+            "host": "localhost",
+            "username": "my-user",
+            "password": "@{parameters.database.password}"
+        }
     }
 }
 ```
@@ -37,7 +38,9 @@ parameters file could look like the following:
 
 ```json
 {
-    "database.password": "${DB_PASSWORD}"
+    "parameters": {
+        "database.password": "${parameters.DB_PASSWORD}"
+    }
 }
 ```
 
@@ -80,7 +83,7 @@ the services layer. An example would be with the following class:
 
 namespace MyVendor\MyProject;
 
-use Ulrack\Dbal\Common\ConnectionInterface;
+use GrizzIt\Dbal\Common\ConnectionInterface;
 
 class MyClass
 {

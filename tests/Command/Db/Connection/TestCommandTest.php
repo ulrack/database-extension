@@ -10,11 +10,12 @@ namespace Ulrack\DatabaseExtension\Tests\Command\Db\Connection;
 use Exception;
 use RuntimeException;
 use PHPUnit\Framework\TestCase;
-use Ulrack\Dbal\Common\ConnectionInterface;
-use Ulrack\Command\Common\Command\InputInterface;
-use Ulrack\Command\Common\Command\OutputInterface;
+use GrizzIt\Dbal\Common\ConnectionInterface;
+use GrizzIt\Command\Common\Command\InputInterface;
+use GrizzIt\Command\Common\Command\OutputInterface;
+use GrizzIt\Configuration\Common\RegistryInterface;
+use GrizzIt\Services\Common\Factory\ServiceFactoryInterface;
 use Ulrack\DatabaseExtension\Command\Db\Connection\TestCommand;
-use Ulrack\DatabaseExtension\Factory\Extension\DatabaseConnectionsFactory;
 
 /**
  * @coversDefaultClass \Ulrack\DatabaseExtension\Command\Db\Connection\TestCommand
@@ -29,16 +30,28 @@ class TestCommandTest extends TestCase
      */
     public function testInvoke(): void
     {
-        $databasesFactory = $this->createMock(DatabaseConnectionsFactory::class);
-        $subject = new TestCommand($databasesFactory);
+        $configRegistry = $this->createMock(RegistryInterface::class);
+        $serviceFactory = $this->createMock(ServiceFactoryInterface::class);
+        $subject = new TestCommand($serviceFactory, $configRegistry);
         $output = $this->createMock(OutputInterface::class);
 
-        $databasesFactory->expects(static::once())
-            ->method('getList')
-            ->willReturn(['foo', 'bar']);
+        $configRegistry->expects(static::once())
+            ->method('toArray')
+            ->willReturn(
+                [
+                    'services' => [
+                        [
+                            'database-connections' => [
+                                'my.connection' => []
+                            ]
+                        ]
+                    ]
+                ]
+            );
 
-        $databasesFactory->expects(static::exactly(2))
+        $serviceFactory->expects(static::once())
             ->method('create')
+            ->with('database-connections.my.connection')
             ->willReturn($this->createMock(ConnectionInterface::class));
 
         $subject->__invoke($this->createMock(InputInterface::class), $output);
@@ -52,15 +65,27 @@ class TestCommandTest extends TestCase
      */
     public function testInvokeFailing(): void
     {
-        $databasesFactory = $this->createMock(DatabaseConnectionsFactory::class);
-        $subject = new TestCommand($databasesFactory);
+        $configRegistry = $this->createMock(RegistryInterface::class);
+        $serviceFactory = $this->createMock(ServiceFactoryInterface::class);
+        $subject = new TestCommand($serviceFactory, $configRegistry);
         $output = $this->createMock(OutputInterface::class);
 
-        $databasesFactory->expects(static::once())
-            ->method('getList')
-            ->willReturn(['foo', 'bar']);
+        $configRegistry->expects(static::once())
+            ->method('toArray')
+            ->willReturn(
+                [
+                    'services' => [
+                        [
+                            'database-connections' => [
+                                'my.connection' => [],
+                                'my.other.connection' => []
+                            ]
+                        ]
+                    ]
+                ]
+            );
 
-        $databasesFactory->expects(static::exactly(2))
+        $serviceFactory->expects(static::exactly(2))
             ->method('create')
             ->willThrowException(
                 new Exception(

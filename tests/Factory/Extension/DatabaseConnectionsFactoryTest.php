@@ -8,9 +8,8 @@
 namespace Ulrack\DatabaseExtension\Tests\Factory\Extension;
 
 use PHPUnit\Framework\TestCase;
-use Ulrack\Dbal\Common\ConnectionInterface;
-use Ulrack\Dbal\Common\ConnectionFactoryInterface;
-use Ulrack\Services\Exception\DefinitionNotFoundException;
+use GrizzIt\Dbal\Common\ConnectionInterface;
+use GrizzIt\Dbal\Common\ConnectionFactoryInterface;
 use Ulrack\DatabaseExtension\Factory\Extension\DatabaseConnectionsFactory;
 
 /**
@@ -19,237 +18,46 @@ use Ulrack\DatabaseExtension\Factory\Extension\DatabaseConnectionsFactory;
 class DatabaseConnectionsFactoryTest extends TestCase
 {
     /**
-     * @covers ::registerService
      * @covers ::create
-     * @covers ::resolveReference
-     * @covers ::createDatabaseInstance
-     *
-     * @return void
-     */
-    public function testRegisterService(): void
-    {
-        $subject = $this->createPartialMock(
-            DatabaseConnectionsFactory::class,
-            [
-                'preCreate',
-                'getParameters',
-                'getKey',
-                'getServices',
-                'getInternalService',
-                'superCreate',
-                'postCreate'
-            ]
-        );
-
-        $configuredConnection = $this->createMock(ConnectionInterface::class);
-
-        $subject->registerService('foo', $configuredConnection);
-
-        $subject->method('getParameters')
-            ->willReturn([]);
-
-        $subject->expects(static::once())
-            ->method('preCreate')
-            ->willReturn(['serviceKey' => 'database-connections.foo']);
-
-        $subject->method('getKey')
-            ->willReturn('database-connections');
-
-        $subject->expects(static::once())
-            ->method('getServices')
-            ->willReturn(
-                [
-                    'database-connections' => [
-                        'foo' => ['my-connection-configuration'],
-                        'bar' => ['my-connection']
-                    ]
-                ]
-            );
-
-        $subject->expects(static::once())
-            ->method('postCreate')
-            ->with(
-                'database-connections.foo',
-                $configuredConnection,
-                []
-            )->willReturn(
-                ['return' => $configuredConnection]
-            );
-
-        $this->assertEquals(
-            $configuredConnection,
-            $subject->create('database-connections.foo')
-        );
-    }
-
-    /**
-     * @covers ::create
-     *
-     * @return void
-     */
-    public function testCreateNoService(): void
-    {
-        $subject = $this->createPartialMock(
-            DatabaseConnectionsFactory::class,
-            [
-                'preCreate',
-                'getParameters',
-                'getKey',
-                'getServices',
-                'getInternalService',
-                'superCreate',
-                'postCreate'
-            ]
-        );
-
-        $subject->expects(static::once())
-            ->method('getParameters')
-            ->willReturn([]);
-
-        $subject->expects(static::once())
-            ->method('preCreate')
-            ->willReturn(['serviceKey' => 'database-connections.main']);
-
-        $subject->method('getKey')
-            ->willReturn('database-connections');
-
-        $subject->expects(static::once())
-            ->method('getServices')
-            ->willReturn(
-                [
-                    'database-connections' => [
-                        'bar' => ['my-connection']
-                    ]
-                ]
-            );
-
-        $this->expectException(DefinitionNotFoundException::class);
-        $subject->create('database-connections.foo');
-    }
-
-    /**
-     * @covers ::getList
-     *
-     * @return void
-     */
-    public function testGetList(): void
-    {
-        $subject = $this->createPartialMock(
-            DatabaseConnectionsFactory::class,
-            [
-                'preCreate',
-                'getParameters',
-                'getKey',
-                'getServices',
-                'getInternalService',
-                'superCreate',
-                'postCreate'
-            ]
-        );
-
-        $subject->method('getKey')
-            ->willReturn('database-connections');
-
-        $subject->expects(static::once())
-            ->method('getServices')
-            ->willReturn(
-                [
-                    'database-connections' => [
-                        'bar' => ['my-connection']
-                    ]
-                ]
-            );
-
-
-        $this->assertEquals(['bar'], $subject->getList());
-    }
-
-    /**
-     * @covers ::create
-     * @covers ::createDatabaseInstance
-     * @covers ::resolveReference
      *
      * @return void
      */
     public function testCreate(): void
     {
-        $subject = $this->createPartialMock(
-            DatabaseConnectionsFactory::class,
-            [
-                'preCreate',
-                'getParameters',
-                'getKey',
-                'getServices',
-                'getInternalService',
-                'superCreate',
-                'postCreate'
-            ]
-        );
-
-        $connection = $this->createMock(ConnectionInterface::class);
+        $subject = new DatabaseConnectionsFactory();
         $connectionFactory = $this->createMock(ConnectionFactoryInterface::class);
-
-        $subject->method('getParameters')
-            ->willReturn([]);
-
-        $subject->expects(static::once())
-            ->method('preCreate')
-            ->willReturn(['serviceKey' => 'database-connections.foo']);
-
-        $subject->method('getKey')
-            ->willReturn('database-connections');
-
-        $subject->expects(static::once())
-            ->method('getServices')
-            ->willReturn(
-                [
-                    'database-connections' => [
-                        'foo' => [
-                            'type' => 'pdo',
-                            'driver' => 'mysql',
-                            'host' => 'localhost',
-                            'database' => 'foo',
-                            'username' => 'bar',
-                            'password' => '@{parameters.database.password}'
-                        ],
-                        'bar' => ['my-connection']
-                    ]
-                ]
-            );
-
-        $subject->expects(static::exactly(2))
-            ->method('superCreate')
-            ->withConsecutive(
-                ['parameters.database.password'],
-                ['services.db.connection.factory.pdo']
-            )->willReturnOnConsecutiveCalls(
-                'baz',
-                $connectionFactory
-            );
+        $connection = $this->createMock(ConnectionInterface::class);
+        $create = function (string $key) use ($connectionFactory) {
+            if ($key === 'services.db.connection.factory.pdo') {
+                return $connectionFactory;
+            }
+        };
 
         $connectionFactory->expects(static::once())
             ->method('create')
             ->with(
-                'mysql:host=localhost;dbname=foo',
-                'bar',
-                'baz',
-                null,
-                null
+                'mysql:host=localhost;dbname=mydb',
+                'root'
             )->willReturn($connection);
-
-        $subject->expects(static::once())
-            ->method('postCreate')
-            ->with(
-                'database-connections.foo',
-                $connection,
-                []
-            )->willReturn(
-                ['return' => $connection]
-            );
 
         $this->assertEquals(
             $connection,
-            $subject->create('database-connections.foo')
+            $subject->create(
+                'database-connections.foo',
+                [
+                    'type' => 'pdo',
+                    'driver' => 'mysql',
+                    'host' => 'localhost',
+                    'database' => 'mydb',
+                    'username' => 'root'
+                ],
+                $create
+            )
+        );
+
+        $this->assertEquals(
+            $connection,
+            $subject->create('database-connections.foo', [], $create)
         );
     }
 }
